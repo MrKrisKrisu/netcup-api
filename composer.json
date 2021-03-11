@@ -1,0 +1,21 @@
+{
+  "name": "mrkriskrisu/netcup-api",
+  "description": "Library to communicate to the netcup CCP and DNS API",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Kristian Stöckel",
+      "email": "git@k118.de"
+    }
+  ],
+  "require": {
+    "php": "^7.3 || ^8.0",
+    "guzzlehttp/guzzle": "^7.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "Netcup\\": "src/"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 <?php
 
-namespace Netcup;
+namespace Netcup\Exception;
 
 use stdClass;
 

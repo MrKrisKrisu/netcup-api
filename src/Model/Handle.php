@@ -3,8 +3,8 @@
 namespace Netcup\Model;
 
 use Netcup\API;
-use Netcup\NetcupException;
-use Netcup\NotLoggedInException;
+use Netcup\Exception\NetcupException;
+use Netcup\Exception\NotLoggedInException;
 use stdClass;
 
 class Handle {
@@ -22,18 +22,18 @@ class Handle {
     private string $telephone;
     private string $email;
 
-    public function __construct(API $api, stdClass $apiResponse) {
+    public function __construct(API $api, stdClass $apiObject) {
         $this->api = $api;
-        $this->id = $apiResponse?->responsedata?->id;
-        $this->type = $apiResponse?->responsedata?->type;
-        $this->name = $apiResponse?->responsedata?->name;
-        $this->organisation = $apiResponse?->responsedata?->organisation;
-        $this->street = $apiResponse?->responsedata?->street;
-        $this->postalCode = $apiResponse?->responsedata?->postalcode;
-        $this->city = $apiResponse?->responsedata?->city;
-        $this->countryCode = $apiResponse?->responsedata?->countrycode;
-        $this->telephone = $apiResponse?->responsedata?->telephone;
-        $this->email = $apiResponse?->responsedata?->email;
+        $this->id = $apiObject->id;
+        $this->type = $apiObject?->type;
+        $this->name = $apiObject?->name;
+        $this->organisation = $apiObject?->organisation;
+        $this->street = $apiObject?->street;
+        $this->postalCode = $apiObject?->postalcode;
+        $this->city = $apiObject?->city;
+        $this->countryCode = $apiObject?->countrycode;
+        $this->telephone = $apiObject?->telephone;
+        $this->email = $apiObject?->email;
     }
 
     public function getID(): ?int {

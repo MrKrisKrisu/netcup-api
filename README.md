@@ -20,6 +20,15 @@ $logoutResult = $netcupApi->logout();
 echo "Logout successful? -> " . ($logoutResult ? 'Yes!' : 'No! :(') . "\r\n";
 ```
 
+### Domains
+
+#### Get domains and DNS-Records
+
+```php
+$domain = $api->infoDomain('k118.de');
+print_r($domain->getDnsRecords());
+```
+
 ### Domain-Handles (Reseller only)
 
 #### Create and update Handle
@@ -37,3 +46,9 @@ $handle = $api->createHandle(
 
 $handle->setCity('Kassel'); //this will directly edit the data at the netcup database as well
 ```
+
+## Official links
+
+- [netcup Wiki: "DNS API"](https://www.netcup-wiki.de/wiki/DNS_API)
+- [netcup Wiki: "CCP API"](https://www.netcup-wiki.de/wiki/CCP_API)
+- [netcup Documentation: "API Endpoints"](https://ccp.netcup.net/run/webservice/servers/endpoint.php)

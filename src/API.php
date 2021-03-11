@@ -4,6 +4,11 @@ namespace Netcup;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Netcup\Exception\NetcupException;
+use Netcup\Exception\NotLoggedInException;
+use Netcup\Exception\NotRegisteredAtNetcupException;
+use Netcup\Model\DnsRecord;
+use Netcup\Model\Domain;
 use Netcup\Model\Handle;
 use stdClass;
 
@@ -203,11 +208,10 @@ class API {
                 ]
             ]);
             $json = json_decode($response->getBody());
-            print_r($json);
             if($json?->status != 'success') {
                 throw new NetcupException($json);
             }
-            return new Handle($this, $json);
+            return new Handle($this, $json->responsedata);
         } catch(GuzzleException) {
             throw new NetcupException();
         }
@@ -276,28 +280,46 @@ class API {
      * Zone must be owned by customer.
      *
      * @param string $domainName
-     * @return stdClass
-     * @throws GuzzleException
+     * @return array
      * @throws NotLoggedInException
-     * @untested
+     * @throws NetcupException
      */
-    public function infoDnsRecords(string $domainName): stdClass {
+    public function infoDnsRecords(string $domainName): array {
         if(!$this->isLoggedIn()) {
             throw new NotLoggedInException();
         }
-        $client = new Client();
-        $response = $client->post(self::API_ENDPOINT, [
-            'json' => [
-                'action' => 'infoDnsRecords',
-                'param'  => [
-                    'domainname'     => $domainName,
-                    'apikey'         => $this->apiKey,
-                    'apisessionid'   => $this->apiSessionId,
-                    'customernumber' => $this->customerId
+        try {
+            $client = new Client();
+            $response = $client->post(self::API_ENDPOINT, [
+                'json' => [
+                    'action' => 'infoDnsRecords',
+                    'param'  => [
+                        'domainname'     => $domainName,
+                        'apikey'         => $this->apiKey,
+                        'apisessionid'   => $this->apiSessionId,
+                        'customernumber' => $this->customerId
+                    ]
                 ]
-            ]
-        ]);
-        return json_decode($response->getBody());
+            ]);
+            $json = json_decode($response->getBody());
+            if($json?->status != 'success' || !isset($json->responsedata->dnsrecords)) {
+                throw new NetcupException($json);
+            }
+            $records = [];
+            foreach($json->responsedata->dnsrecords as $recordRaw) {
+                $records[] = new DnsRecord(
+                    id: $recordRaw->id,
+                    hostname: $recordRaw->hostname,
+                    type: $recordRaw->type,
+                    priority: $recordRaw->priority,
+                    destination: $recordRaw->destination,
+                    state: $recordRaw->state
+                );
+            }
+            return $records;
+        } catch(GuzzleException) {
+            throw new NetcupException();
+        }
     }
 
     /**
@@ -331,27 +353,39 @@ class API {
      * This function is available for domain resellers.
      *
      * @param string $domainName
-     * @return stdClass
-     * @throws GuzzleException
+     * @return Domain
      * @throws NotLoggedInException
+     * @throws NetcupException
+     * @throws NotRegisteredAtNetcupException
      */
-    public function infoDomain(string $domainName): stdClass {
+    public function infoDomain(string $domainName): Domain {
         if(!$this->isLoggedIn()) {
             throw new NotLoggedInException();
         }
-        $client = new Client();
-        $response = $client->post(self::API_ENDPOINT, [
-            'json' => [
-                'action' => 'infoDomain',
-                'param'  => [
-                    'domainname'     => $domainName,
-                    'apikey'         => $this->apiKey,
-                    'apisessionid'   => $this->apiSessionId,
-                    'customernumber' => $this->customerId
+        try {
+            $client = new Client();
+            $response = $client->post(self::API_ENDPOINT, [
+                'json' => [
+                    'action' => 'infoDomain',
+                    'param'  => [
+                        'domainname'     => $domainName,
+                        'apikey'         => $this->apiKey,
+                        'apisessionid'   => $this->apiSessionId,
+                        'customernumber' => $this->customerId
+                    ]
                 ]
-            ]
-        ]);
-        return json_decode($response->getBody());
+            ]);
+            $json = json_decode($response->getBody());
+            if($json?->status != 'success') {
+                throw new NetcupException($json);
+            }
+            if($json?->responsedata?->state == 'not registered at netcup') {
+                throw new NotRegisteredAtNetcupException();
+            }
+            return new Domain($this, $json->responsedata);
+        } catch(GuzzleException) {
+            throw new NetcupException();
+        }
     }
 
     /**
@@ -359,80 +393,110 @@ class API {
      * This function is available for domain resellers.
      *
      * @param int $handleId
-     * @return stdClass
-     * @throws GuzzleException
+     * @return Handle
+     * @throws NetcupException
      * @throws NotLoggedInException
-     * @untested
      */
-    public function infoHandle(int $handleId): stdClass {
+    public function infoHandle(int $handleId): Handle {
         if(!$this->isLoggedIn()) {
             throw new NotLoggedInException();
         }
-        $client = new Client();
-        $response = $client->post(self::API_ENDPOINT, [
-            'json' => [
-                'action' => 'infoHandle',
-                'param'  => [
-                    'handle_id'      => $handleId,
-                    'apikey'         => $this->apiKey,
-                    'apisessionid'   => $this->apiSessionId,
-                    'customernumber' => $this->customerId,
+        try {
+            $client = new Client();
+            $response = $client->post(self::API_ENDPOINT, [
+                'json' => [
+                    'action' => 'infoHandle',
+                    'param'  => [
+                        'handle_id'      => $handleId,
+                        'apikey'         => $this->apiKey,
+                        'apisessionid'   => $this->apiSessionId,
+                        'customernumber' => $this->customerId,
+                    ]
                 ]
-            ]
-        ]);
-        return json_decode($response->getBody());
+            ]);
+            $json = json_decode($response->getBody());
+            if($json?->status != 'success') {
+                throw new NetcupException($json);
+            }
+            return new Handle($this, $json->responsedata);
+        } catch(GuzzleException) {
+            throw new NetcupException();
+        }
     }
 
     /**
      * Get information about all domains that a customer owns. For detailed information please use infoDomain
      * This function is available for domain resellers.
      *
-     * @return stdClass
-     * @throws GuzzleException
-     * @throws NotLoggedInException
+     * @return array
+     * @throws NotLoggedInException|NetcupException
      */
-    public function listAllDomains(): stdClass {
+    public function listAllDomains(): array {
         if(!$this->isLoggedIn()) {
             throw new NotLoggedInException();
         }
-        $client = new Client();
-        $response = $client->post(self::API_ENDPOINT, [
-            'json' => [
-                'action' => 'listallDomains',
-                'param'  => [
-                    'apikey'         => $this->apiKey,
-                    'apisessionid'   => $this->apiSessionId,
-                    'customernumber' => $this->customerId
+        try {
+            $client = new Client();
+            $response = $client->post(self::API_ENDPOINT, [
+                'json' => [
+                    'action' => 'listallDomains',
+                    'param'  => [
+                        'apikey'         => $this->apiKey,
+                        'apisessionid'   => $this->apiSessionId,
+                        'customernumber' => $this->customerId
+                    ]
                 ]
-            ]
-        ]);
-        return json_decode($response->getBody());
+            ]);
+            $json = json_decode($response->getBody());
+            if($json?->status != 'success') {
+                throw new NetcupException($json);
+            }
+            $domains = [];
+            foreach($json->responsedata as $recordRaw) {
+                $domains[] = new Domain($this, $recordRaw);
+            }
+            return $domains;
+        } catch(GuzzleException) {
+            throw new NetcupException();
+        }
     }
 
     /**
      * Get ids and name of all handles of a user. If Organisation is set, also value of organisation field.
      * This function is available for domain resellers.
      *
-     * @return stdClass
-     * @throws GuzzleException
+     * @return array
      * @throws NotLoggedInException
+     * @throws NetcupException
      */
-    public function listAllHandle(): stdClass {
+    public function listAllHandle(): array {
         if(!$this->isLoggedIn()) {
             throw new NotLoggedInException();
         }
-        $client = new Client();
-        $response = $client->post(self::API_ENDPOINT, [
-            'json' => [
-                'action' => 'listallHandle',
-                'param'  => [
-                    'apikey'         => $this->apiKey,
-                    'apisessionid'   => $this->apiSessionId,
-                    'customernumber' => $this->customerId
+        try {
+            $client = new Client();
+            $response = $client->post(self::API_ENDPOINT, [
+                'json' => [
+                    'action' => 'listallHandle',
+                    'param'  => [
+                        'apikey'         => $this->apiKey,
+                        'apisessionid'   => $this->apiSessionId,
+                        'customernumber' => $this->customerId
+                    ]
                 ]
-            ]
-        ]);
-        return json_decode($response->getBody());
+            ]);
+            $json = json_decode($response->getBody());
+            if($json?->status != 'success') {
+                throw new NetcupException($json);
+            }
+            $handles = [];
+            foreach($json->responsedata as $recordRaw) {
+                $handles[] = new Handle($this, $recordRaw);
+            }
+            return $handles;
+        } catch(GuzzleException) {
+            throw new NetcupException();
+        }
     }
 
     /**
@@ -716,7 +780,7 @@ class API {
             if($json?->status != 'success') {
                 throw new NetcupException($json);
             }
-            return new Handle($this, $json);
+            return new Handle($this, $json->responsedata);
         } catch(GuzzleException) {
             throw new NetcupException();
         }

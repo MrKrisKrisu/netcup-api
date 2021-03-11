@@ -4,6 +4,7 @@ namespace Netcup;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Netcup\Model\Handle;
 use stdClass;
 
 class API {
@@ -153,44 +154,63 @@ class API {
      * Field email can not be changed if domain is used at a global top-level domain.
      * This function is available for domain resellers.
      *
-     * @param string $type "organisation" or "person"
      * @param string $name
-     * @param string $organisation
      * @param string $street
-     * @param string $postalcode
+     * @param string $postalCode
      * @param string $city
-     * @param string $countrycode
+     * @param string $countryCode
      * @param string $telephone
      * @param string $email
-     * @return stdClass
-     * @throws GuzzleException
+     * @param string $type "organisation" or "person"
+     * @param string $organisation
+     * @return Handle
+     * @throws NetcupException
      * @throws NotLoggedInException
      */
-    public function createHandle(string $type, string $name, string $organisation, string $street, string $postalcode, string $city, string $countrycode, string $telephone, string $email): stdClass {
+    public function createHandle(
+        string $name,
+        string $street,
+        string $postalCode,
+        string $city,
+        string $countryCode,
+        string $telephone,
+        string $email,
+        string $type = 'person',
+        string $organisation = '',
+    ): Handle {
         if(!$this->isLoggedIn()) {
             throw new NotLoggedInException();
         }
-        $client = new Client();
-        $response = $client->post(self::API_ENDPOINT, [
-            'json' => [
-                'action' => 'createHandle',
-                'param'  => [
-                    'type'           => $type,
-                    'name'           => $name,
-                    'organisation'   => $organisation,
-                    'street'         => $street,
-                    'postalcode'     => $postalcode,
-                    'city'           => $city,
-                    'countrycode'    => $countrycode,
-                    'telephone'      => $telephone,
-                    'email'          => $email,
-                    'apikey'         => $this->apiKey,
-                    'apisessionid'   => $this->apiSessionId,
-                    'customernumber' => $this->customerId
+        try {
+            $client = new Client();
+            $response = $client->post(self::API_ENDPOINT, [
+                'json' => [
+                    'action' => 'createHandle',
+                    'param'  => [
+                        'type'           => $type,
+                        'name'           => $name,
+                        'organisation'   => $organisation,
+                        'street'         => $street,
+                        'postalcode'     => $postalCode,
+                        'city'           => $city,
+                        'countrycode'    => $countryCode,
+                        'telephone'      => $telephone,
+                        'email'          => $email,
+                        'apikey'         => $this->apiKey,
+                        'apisessionid'   => $this->apiSessionId,
+                        'customernumber' => $this->customerId
+                    ]
                 ]
-            ]
-        ]);
-        return json_decode($response->getBody());
+            ]);
+            $json = json_decode($response->getBody());
+            print_r($json);
+            if($json?->status != 'success') {
+                throw new NetcupException($json);
+            }
+            return new Handle($this, $json);
+        } catch(GuzzleException) {
+            throw new NetcupException();
+        }
     }
 
     /**
@@ -645,41 +665,60 @@ class API {
      * @param string $name
      * @param string $organisation
      * @param string $street
-     * @param string $postalcode
+     * @param string $postalCode
      * @param string $city
-     * @param string $countrycode
+     * @param string $countryCode
      * @param string $telephone
      * @param string $email
-     * @return stdClass
-     * @throws GuzzleException
+     * @return Handle
+     * @throws NetcupException
      * @throws NotLoggedInException
      * @untested
      */
-    public function updateHandle(int $handleId, string $type, string $name, string $organisation, string $street, string $postalcode, string $city, string $countrycode, string $telephone, string $email): stdClass {
+    public function updateHandle(
+        int $handleId,
+        string $type,
+        string $name,
+        string $organisation,
+        string $street,
+        string $postalCode,
+        string $city,
+        string $countryCode,
+        string $telephone,
+        string $email
+    ): Handle {
         if(!$this->isLoggedIn()) {
             throw new NotLoggedInException();
         }
-        $client = new Client();
-        $response = $client->post(self::API_ENDPOINT, [
-            'json' => [
-                'action' => 'updateHandle',
-                'param'  => [
-                    'handle_id'      => $handleId,
-                    'type'           => $type,
-                    'name'           => $name,
-                    'organisation'   => $organisation,
-                    'street'         => $street,
-                    'postalcode'     => $postalcode,
-                    'city'           => $city,
-                    'countrycode'    => $countrycode,
-                    'telephone'      => $telephone,
-                    'email'          => $email,
-                    'apikey'         => $this->apiKey,
-                    'apisessionid'   => $this->apiSessionId,
-                    'customernumber' => $this->customerId
+        try {
+            $client = new Client();
+            $response = $client->post(self::API_ENDPOINT, [
+                'json' => [
+                    'action' => 'updateHandle',
+                    'param'  => [
+                        'handle_id'      => $handleId,
+                        'type'           => $type,
+                        'name'           => $name,
+                        'organisation'   => $organisation,
+                        'street'         => $street,
+                        'postalcode'     => $postalCode,
+                        'city'           => $city,
+                        'countrycode'    => $countryCode,
+                        'telephone'      => $telephone,
+                        'email'          => $email,
+                        'apikey'         => $this->apiKey,
+                        'apisessionid'   => $this->apiSessionId,
+                        'customernumber' => $this->customerId
+                    ]
                 ]
-            ]
-        ]);
-        return json_decode($response->getBody());
+            ]);
+            $json = json_decode($response->getBody());
+            if($json?->status != 'success') {
+                throw new NetcupException($json);
+            }
+            return new Handle($this, $json);
+        } catch(GuzzleException) {
+            throw new NetcupException();
+        }
     }
 }

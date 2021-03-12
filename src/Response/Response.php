@@ -16,7 +16,7 @@ class Response {
         return $this->rawResponse?->status == 'success';
     }
 
-    public function getData(): ?stdClass {
+    public function getData(): stdClass|array|null {
         return $this->rawResponse?->responsedata;
     }
 

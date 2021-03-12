@@ -17,13 +17,15 @@ class API {
 
     private const API_ENDPOINT = 'https://ccp.netcup.net/run/webservice/servers/endpoint.php?JSON';
 
-    private $apiKey;
-    private $customerId;
-    private $apiSessionId;
+    private string $apiKey;
+    private string $customerId;
+    private string $apiSessionId;
+    private bool   $logRequests = false;
 
-    public function __construct(string $apiKey, string $apiPassword, int $customerId) {
+    public function __construct(string $apiKey, string $apiPassword, int $customerId, bool $logRequests = false) {
         $this->apiKey = $apiKey;
         $this->customerId = $customerId;
+        $this->logRequests = $logRequests;
         $this->login($apiPassword);
     }
 
@@ -574,24 +576,45 @@ class API {
      * @throws NetcupException
      */
     private function request(string $action, array $param = []): Response {
+
+        $requestId = uniqid();
         $payload = [
             'action' => $action,
             'param'  => [
-                'apikey'         => $this->apiKey,
-                'apisessionid'   => $this->apiSessionId,
-                'customernumber' => $this->customerId
+                'clientrequestid' => $requestId,
+                'apikey'          => $this->apiKey,
+                'apisessionid'    => $this->apiSessionId,
+                'customernumber'  => $this->customerId
             ]
         ];
+
+        $this->writeToLog($requestId, 'Send ' . $action . ' request');
 
         foreach($param as $key => $value) {
             $payload['param'][$key] = $value;
         }
         try {
             $client = new Client();
-            $response = $client->post(self::API_ENDPOINT, ['json' => $payload]);
-            return new Response(json_decode($response->getBody()));
+            $guzzleResponse = $client->post(self::API_ENDPOINT, ['json' => $payload]);
+            $response = new Response(json_decode($guzzleResponse->getBody()));
+            $this->writeToLog($requestId, 'Received "' . $response->getStatus() . '" with message "' . $response->getShortMessage() . '"');
+            return $response;
         } catch(GuzzleException) {
             throw new NetcupException();
         }
+    }
+
+    private function writeToLog(string $requestID, string $log) {
+        if(!$this->logRequests)
+            return;
+
+        $data = strtr('[:date] :requestId: :log' . PHP_EOL, [
+            ':date'      => date('Y-m-d H:i:s'),
+            ':requestId' => $requestID,
+            ':log'       => $log
+        ]);
+
+        $fp = fopen(dirname(__DIR__) . '/logs/log_' . date('Y_m_d') . '.log', 'a');
+        fwrite($fp, $data);
     }
 }

@@ -19,4 +19,20 @@ class Response {
     public function getData(): ?stdClass {
         return $this->rawResponse?->responsedata;
     }
+
+    public function getStatus(): ?string {
+        return $this->rawResponse?->status;
+    }
+
+    public function getStatusCode(): ?int {
+        return $this->rawResponse?->statuscode;
+    }
+
+    public function getShortMessage(): ?string {
+        return $this->rawResponse?->shortmessage;
+    }
+
+    public function getLongMessage(): ?string {
+        return $this->rawResponse?->longmessage;
+    }
 }

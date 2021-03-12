@@ -2,7 +2,15 @@
 
 namespace Netcup\Model;
 
+use Netcup\API;
+use Netcup\Exception\MissingArgumentsException;
+use Netcup\Exception\NetcupException;
+use Netcup\Exception\NotLoggedInException;
+
 class DnsRecord {
+
+    private API|null    $api;
+    private string|null $domainName;
 
     private int|null    $id;
     private string      $hostname;
@@ -18,7 +26,11 @@ class DnsRecord {
         string $state = null,
         int $priority = 0,
         int $id = null,
+        API $api = null,
+        string $domainName = null
     ) {
+        $this->api = $api;
+        $this->domainName = $domainName;
         $this->id = $id;
         $this->hostname = $hostname;
         $this->type = $type;
@@ -49,6 +61,40 @@ class DnsRecord {
 
     public function getState(): string {
         return $this->state;
+    }
+
+    /**
+     * @param string|null $hostname
+     * @param string|null $type
+     * @param int|null $priority
+     * @param string|null $destination
+     * @return bool
+     * @throws NetcupException
+     * @throws NotLoggedInException
+     * @throws MissingArgumentsException
+     */
+    public function update(string $hostname = null, string $type = null, int $priority = null, string $destination = null): bool {
+        if($this->api == null || $this->id == null || $this->domainName == null) {
+            throw new MissingArgumentsException();
+        }
+        $this->hostname = $hostname ?? $this->hostname;
+        $this->type = $type ?? $this->type;
+        $this->priority = $priority ?? $this->priority;
+        $this->destination = $destination ?? $this->destination;
+
+        $response = $this->api->updateDnsRecords($this->domainName,
+                                                 [
+                                                     'dnsrecords' => [
+                                                         [
+                                                             'id'          => $this->getID(),
+                                                             'hostname'    => $this->getHostname(),
+                                                             'type'        => $this->getType(),
+                                                             'priority'    => $this->getPriority(),
+                                                             'destination' => $this->getDestination()
+                                                         ]
+                                                     ]
+                                                 ]);
+        return $response->wasSuccessful();
     }
 
 }

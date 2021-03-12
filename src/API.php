@@ -213,28 +213,26 @@ class API {
         if(!$this->isLoggedIn()) {
             throw new NotLoggedInException();
         }
-        try {
-            $response = $this->request('infoDnsRecords', [
-                'domainname' => $domainName
-            ]);
-            if(!$response->wasSuccessful() || !isset($response->getData()->dnsrecords)) {
-                throw new NetcupException($response->getData());
-            }
-            $records = [];
-            foreach($response->getData()->dnsrecords as $recordRaw) {
-                $records[] = new DnsRecord(
-                    hostname: $recordRaw->hostname,
-                    type: $recordRaw->type,
-                    destination: $recordRaw->destination,
-                    state: $recordRaw->state,
-                    priority: $recordRaw->priority,
-                    id: $recordRaw->id
-                );
-            }
-            return $records;
-        } catch(GuzzleException) {
-            throw new NetcupException();
+        $response = $this->request('infoDnsRecords', [
+            'domainname' => $domainName
+        ]);
+        if(!$response->wasSuccessful() || !isset($response->getData()->dnsrecords)) {
+            throw new NetcupException($response->getData());
         }
+        $records = [];
+        foreach($response->getData()->dnsrecords as $recordRaw) {
+            $records[] = new DnsRecord(
+                hostname: $recordRaw->hostname,
+                type: $recordRaw->type,
+                destination: $recordRaw->destination,
+                state: $recordRaw->state,
+                priority: $recordRaw->priority,
+                id: $recordRaw->id,
+                api: $this,
+                domainName: $domainName
+            );
+        }
+        return $records;
     }
 
     /**

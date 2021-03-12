@@ -11,18 +11,11 @@ PHP8.
 
 ## Examples
 
+### Login to the API
+
 ```php
-$netcupApi = new \Netcup\API($apiKey, $apiPassword, $customerID);
-echo "Login to account with customer number $customerID \r\n";
-echo "Login successful? -> " . ($netcupApi->isLoggedIn() ? 'Yes!' : 'No! :(') . "\r\n";
-
-$data = $netcupApi->priceTopleveldomain('com');
-echo "The domain will cost " . $data->responsedata->priceperruntime . "\r\n";
-
-$netcupApi->createDomain('github.com');
-
-$logoutResult = $netcupApi->logout();
-echo "Logout successful? -> " . ($logoutResult ? 'Yes!' : 'No! :(') . "\r\n";
+$api = new \Netcup\API("apiKey", "apiPassword", "123456");
+echo "Login " . ($api->isLoggedIn() ? 'successful! :)' : 'not successful! :c') . PHP_EOL;
 ```
 
 ### Domains
@@ -39,11 +32,18 @@ print_r($domain->getDnsRecords());
 ```php
 $domain = $api->infoDomain('k118.de');
 $domain->createNewDnsRecord(new DnsRecord(
-            hostname: 'www', 
-            type: 'A', 
-            destination: '127.0.0.1'
+    hostname: 'www', 
+    type: 'A', 
+    destination: '127.0.0.1'
 ));
+```
 
+#### Update existing DNS-Record
+
+```php
+$domain = $api->infoDomain('k118.de');
+$record = $domain->getDnsRecords()[0];
+$record->update(destination: '127.0.0.2');
 ```
 
 ### Domain-Handles (Reseller only)
@@ -62,6 +62,14 @@ $handle = $api->createHandle(
 );
 
 $handle->setCity('Kassel'); //this will directly edit the data at the netcup database as well
+```
+
+### Logout
+
+You can end the created session. This is optional. If you don't, the token will automatically expire after 15 minutes.
+
+```php
+$logoutResult = $api->logout();
 ```
 
 ## Official links

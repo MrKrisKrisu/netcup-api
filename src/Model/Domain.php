@@ -53,7 +53,7 @@ class Domain {
                                                          ]
                                                      ]
                                                  ]);
-        return $response->status == 'success';
+        return $response->wasSuccessful();
     }
 
 }

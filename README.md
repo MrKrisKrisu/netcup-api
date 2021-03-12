@@ -6,9 +6,8 @@ This library is not related to the netcup GmbH, it is provided by a third party.
 
 ## Installation
 
-You can simply install this library using Composer by running `composer require mrkriskrisu/netcup-api`. You'll need PHP
-
-8.
+You can simply install this library using Composer by running `composer require mrkriskrisu/netcup-api`. You'll need
+PHP8.
 
 ## Examples
 
@@ -39,7 +38,7 @@ print_r($domain->getDnsRecords());
 
 ```php
 $domain = $api->infoDomain('k118.de');
-$domain->createNewDnsRecord(new \Netcup\Model\DnsRecord(
+$domain->createNewDnsRecord(new DnsRecord(
             hostname: 'www', 
             type: 'A', 
             destination: '127.0.0.1'

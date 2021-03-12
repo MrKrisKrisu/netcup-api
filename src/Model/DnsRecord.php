@@ -97,4 +97,30 @@ class DnsRecord {
         return $response->wasSuccessful();
     }
 
+    /**
+     * @return bool
+     * @throws MissingArgumentsException
+     * @throws NetcupException
+     * @throws NotLoggedInException
+     */
+    public function delete(): bool {
+        if($this->api == null || $this->id == null || $this->domainName == null) {
+            throw new MissingArgumentsException();
+        }
+        $response = $this->api->updateDnsRecords($this->domainName,
+                                                 [
+                                                     'dnsrecords' => [
+                                                         [
+                                                             'id'           => $this->getID(),
+                                                             'hostname'     => $this->getHostname(),
+                                                             'type'         => $this->getType(),
+                                                             'priority'     => $this->getPriority(),
+                                                             'destination'  => $this->getDestination(),
+                                                             'deleterecord' => true
+                                                         ]
+                                                     ]
+                                                 ]);
+        return $response->wasSuccessful();
+    }
+
 }

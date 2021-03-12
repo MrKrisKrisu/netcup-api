@@ -4,20 +4,20 @@ namespace Netcup\Model;
 
 class DnsRecord {
 
-    private int    $id;
-    private string $hostname;
-    private string $type;
-    private int    $priority;
-    private string $destination;
-    private string $state;
+    private int|null    $id;
+    private string      $hostname;
+    private string      $type;
+    private int         $priority;
+    private string      $destination;
+    private string|null $state;
 
     public function __construct(
-        int $id,
         string $hostname,
         string $type,
-        int $priority,
         string $destination,
-        string $state
+        string $state = null,
+        int $priority = 0,
+        int $id = null,
     ) {
         $this->id = $id;
         $this->hostname = $hostname;
@@ -40,7 +40,7 @@ class DnsRecord {
     }
 
     public function getPriority(): int {
-        return $this->priority;
+        return $this->priority ?? 0;
     }
 
     public function getDestination(): string {

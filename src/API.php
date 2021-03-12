@@ -308,12 +308,12 @@ class API {
             $records = [];
             foreach($json->responsedata->dnsrecords as $recordRaw) {
                 $records[] = new DnsRecord(
-                    id: $recordRaw->id,
                     hostname: $recordRaw->hostname,
                     type: $recordRaw->type,
-                    priority: $recordRaw->priority,
                     destination: $recordRaw->destination,
-                    state: $recordRaw->state
+                    state: $recordRaw->state,
+                    priority: $recordRaw->priority,
+                    id: $recordRaw->id
                 );
             }
             return $records;
@@ -626,28 +626,31 @@ class API {
      * @param string $domainName
      * @param $dnsRecordSet
      * @return stdClass
-     * @throws GuzzleException
      * @throws NotLoggedInException
-     * @untested
+     * @throws NetcupException
      */
     public function updateDnsRecords(string $domainName, $dnsRecordSet): stdClass {
         if(!$this->isLoggedIn()) {
             throw new NotLoggedInException();
         }
-        $client = new Client();
-        $response = $client->post(self::API_ENDPOINT, [
-            'json' => [
-                'action' => 'updateDnsRecords',
-                'param'  => [
-                    'domainname'     => $domainName,
-                    'dnsrecordset'   => $dnsRecordSet,
-                    'apikey'         => $this->apiKey,
-                    'apisessionid'   => $this->apiSessionId,
-                    'customernumber' => $this->customerId
+        try {
+            $client = new Client();
+            $response = $client->post(self::API_ENDPOINT, [
+                'json' => [
+                    'action' => 'updateDnsRecords',
+                    'param'  => [
+                        'domainname'     => $domainName,
+                        'dnsrecordset'   => $dnsRecordSet,
+                        'apikey'         => $this->apiKey,
+                        'apisessionid'   => $this->apiSessionId,
+                        'customernumber' => $this->customerId
+                    ]
                 ]
-            ]
-        ]);
-        return json_decode($response->getBody());
+            ]);
+            return json_decode($response->getBody());
+        } catch(GuzzleException) {
+            throw new NetcupException();
+        }
     }
 
     /**

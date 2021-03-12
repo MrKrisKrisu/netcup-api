@@ -35,4 +35,25 @@ class Domain {
         return $this->api->infoDnsRecords($this->getDomainName());
     }
 
+    /**
+     * @param DnsRecord $dnsRecord
+     * @return bool
+     * @throws NetcupException
+     * @throws NotLoggedInException
+     */
+    public function createNewDnsRecord(DnsRecord $dnsRecord): bool {
+        $response = $this->api->updateDnsRecords($this->getDomainName(),
+                                                 [
+                                                     'dnsrecords' => [
+                                                         [
+                                                             'hostname'    => $dnsRecord->getHostname(),
+                                                             'type'        => $dnsRecord->getType(),
+                                                             'priority'    => $dnsRecord->getPriority(),
+                                                             'destination' => $dnsRecord->getDestination()
+                                                         ]
+                                                     ]
+                                                 ]);
+        return $response->status == 'success';
+    }
+
 }

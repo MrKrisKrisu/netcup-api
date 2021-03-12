@@ -4,6 +4,9 @@
 
 This library is not related to the netcup GmbH, it is provided by a third party.
 
+> :warning: **Warning: This library is currently still WIP!** Please use it only if you agree that the following releases contain breaking changes.
+
+
 ## Installation
 
 You can simply install this library using Composer by running `composer require mrkriskrisu/netcup-api`. You'll need

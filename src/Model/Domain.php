@@ -26,6 +26,10 @@ class Domain {
         return $this->domainDataRaw->domainname;
     }
 
+    public function getRawData(): ?stdClass {
+        return $this->domainDataRaw;
+    }
+
     /**
      * @return array
      * @throws NetcupException

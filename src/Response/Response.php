@@ -17,6 +17,9 @@ class Response {
     }
 
     public function getData(): stdClass|array|null {
+        if($this->rawResponse?->responsedata === "") {
+            return null;
+        }
         return $this->rawResponse?->responsedata;
     }
 

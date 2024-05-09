@@ -23,6 +23,18 @@ class Response {
         return $this->rawResponse?->responsedata;
     }
 
+    public function getServerRequestId(): ?string {
+        return $this->rawResponse?->serverrequestid;
+    }
+
+    public function getClientRequestId(): ?string {
+        return $this->rawResponse?->clientrequestid;
+    }
+
+    public function getAction(): ?string {
+        return $this->rawResponse?->action;
+    }
+
     public function getStatus(): ?string {
         return $this->rawResponse?->status;
     }

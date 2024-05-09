@@ -157,7 +157,7 @@ class API {
             'email'        => $email
         ]);
         if(!$response->wasSuccessful()) {
-            throw new NetcupException($response->getData());
+            throw new NetcupException($response);
         }
         return new Handle($this, $response->getData());
     }
@@ -217,7 +217,7 @@ class API {
             'domainname' => $domainName
         ]);
         if(!$response->wasSuccessful() || !isset($response->getData()->dnsrecords)) {
-            throw new NetcupException($response->getData());
+            throw new NetcupException($response);
         }
         $records = [];
         foreach($response->getData()->dnsrecords as $recordRaw) {
@@ -268,7 +268,7 @@ class API {
         try {
             $response = $this->request('infoDomain', ['domainname' => $domainName]);
             if(!$response->wasSuccessful()) {
-                throw new NetcupException($response->getData());
+                throw new NetcupException($response);
             }
             if($response->getData()?->state == 'not registered at netcup') {
                 throw new NotRegisteredAtNetcupException();
@@ -297,7 +297,7 @@ class API {
             'handle_id' => $handleId
         ]);
         if(!$response->wasSuccessful()) {
-            throw new NetcupException($response->getData());
+            throw new NetcupException($response);
         }
         return new Handle($this, $response->getData());
     }
@@ -316,7 +316,7 @@ class API {
         }
         $response = $this->request('listallDomains');
         if(!$response->wasSuccessful()) {
-            throw new NetcupException($response->getData());
+            throw new NetcupException($response);
         }
 
         $domains = [];
@@ -341,7 +341,7 @@ class API {
 
         $response = $this->request('listallHandle');
         if(!$response->wasSuccessful()) {
-            throw new NetcupException($response->getData());
+            throw new NetcupException($response);
         }
 
         $handles = [];
@@ -387,7 +387,7 @@ class API {
         }
         $response = $this->request('logout');
         if(!$response->wasSuccessful()) {
-            throw new NetcupException($response->getData());
+            throw new NetcupException($response);
         }
 
         if(!$response->wasSuccessful()) {
@@ -562,7 +562,7 @@ class API {
             'email'        => $email
         ]);
         if(!$response->wasSuccessful()) {
-            throw new NetcupException($response->getData());
+            throw new NetcupException($response);
         }
         return new Handle($this, $response->getData());
     }

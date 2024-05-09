@@ -449,8 +449,10 @@ class API {
      * Update DNS records of a zone. Deletion of other records is optional.
      * When DNSSEC is active, the zone is updated in the nameserver with zone resign after a few minutes.
      *
+     * For more options for every DNS record see https://ccp.netcup.net/run/webservice/servers/endpoint.php#Dnsrecord
+     *
      * @param string $domainName
-     * @param $dnsRecordSet
+     * @param array{"dnsrecords": array{"id": string, "hostname": string, "type": string, "priority": string, "destination": string}[]} $dnsRecordSet
      * @return Response
      * @throws NotLoggedInException
      * @throws NetcupException

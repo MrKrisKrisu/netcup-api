@@ -17,16 +17,19 @@ class API {
 
     private const API_ENDPOINT = 'https://ccp.netcup.net/run/webservice/servers/endpoint.php?JSON';
 
+    public const STATUS_CODE_SESSION_TIMEOUT = 4001;
+
     private string $apiKey;
     private string $customerId;
-    private string $apiSessionId;
+    private string $apiPassword;
     private bool   $logRequests = false;
+    private ?string $apiSessionId = null;
 
     public function __construct(string $apiKey, string $apiPassword, int $customerId, bool $logRequests = false) {
         $this->apiKey = $apiKey;
+        $this->apiPassword = $apiPassword;
         $this->customerId = $customerId;
         $this->logRequests = $logRequests;
-        $this->login($apiPassword);
     }
 
     public function isLoggedIn(): bool {
@@ -43,9 +46,6 @@ class API {
      * @throws NetcupException
      */
     public function ackPoll(int $apiLogId): Response {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         return $this->request('ackpoll', ['apilogid' => $apiLogId]);
     }
 
@@ -61,9 +61,6 @@ class API {
      * @throws NetcupException
      */
     public function cancelDomain(string $domainName): Response {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         return $this->request('cancelDomain', ['domainname' => $domainName]);
     }
 
@@ -80,9 +77,6 @@ class API {
      * @untested
      */
     public function changeOwnerDomain(int $newHandleId, string $domainName): Response {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         return $this->request('changeOwnerDomain', [
             'new_handle_id' => $newHandleId,
             'domainname'    => $domainName
@@ -102,9 +96,6 @@ class API {
      * @untested
      */
     public function createDomain(string $domainName, $contacts, $nameservers): Response {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         return $this->request('createDomain', [
             'domainname'  => $domainName,
             'contacts'    => $contacts,
@@ -142,9 +133,6 @@ class API {
         string $type = 'person',
         string $organisation = '',
     ): Handle {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         $response = $this->request('createHandle', [
             'type'         => $type,
             'name'         => $name,
@@ -173,9 +161,6 @@ class API {
      * @throws NetcupException
      */
     public function deleteHandle(int $handleId): Response {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         return $this->request('deleteHandle', [
             'handle_id' => $handleId
         ]);
@@ -192,9 +177,6 @@ class API {
      * @untested
      */
     public function getAuthcodeDomain(string $domainName): Response {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         return $this->request('getAuthcodeDomain', [
             'domainname' => $domainName
         ]);
@@ -210,9 +192,6 @@ class API {
      * @throws NetcupException
      */
     public function infoDnsRecords(string $domainName): array {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         $response = $this->request('infoDnsRecords', [
             'domainname' => $domainName
         ]);
@@ -243,9 +222,6 @@ class API {
      * @untested
      */
     public function infoDnsZone(string $domainName): Response {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         return $this->request('infoDnsZone', [
             'domainname' => $domainName
         ]);
@@ -262,9 +238,6 @@ class API {
      * @throws NotRegisteredAtNetcupException
      */
     public function infoDomain(string $domainName): Domain {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         try {
             $response = $this->request('infoDomain', ['domainname' => $domainName]);
             if(!$response->wasSuccessful()) {
@@ -290,9 +263,6 @@ class API {
      * @throws NotLoggedInException
      */
     public function infoHandle(int $handleId): Handle {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         $response = $this->request('infoHandle', [
             'handle_id' => $handleId
         ]);
@@ -311,9 +281,6 @@ class API {
      * @throws NetcupException
      */
     public function listAllDomains(): array {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         $response = $this->request('listallDomains');
         if(!$response->wasSuccessful()) {
             throw new NetcupException($response->getData());
@@ -335,10 +302,6 @@ class API {
      * @throws NetcupException
      */
     public function listAllHandle(): array {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
-
         $response = $this->request('listallHandle');
         if(!$response->wasSuccessful()) {
             throw new NetcupException($response->getData());
@@ -352,28 +315,28 @@ class API {
     }
 
     /**
-     * @param string $apiPassword
-     * @return bool
      * @throws GuzzleException
+     * @throws NotLoggedInException
      */
-    private function login(string $apiPassword): bool {
+    private function login(): void {
         $client = new Client();
         $response = $client->post(self::API_ENDPOINT, [
             'json' => [
                 'action' => 'login',
                 'param'  => [
                     'apikey'         => $this->apiKey,
-                    'apipassword'    => $apiPassword,
+                    'apipassword'    => $this->apiPassword,
                     'customernumber' => $this->customerId
                 ]
             ]
         ]);
         $json = json_decode($response->getBody());
-        if(isset($json->responsedata->apisessionid)) {
-            $this->apiSessionId = $json->responsedata->apisessionid;
-            return true;
+
+        if (!isset($json->responsedata->apisessionid)) {
+            throw new NotLoggedInException();
         }
-        return false;
+
+        $this->apiSessionId = $json->responsedata->apisessionid;
     }
 
     /**
@@ -382,9 +345,6 @@ class API {
      * @throws NetcupException
      */
     public function logout(): bool {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         $response = $this->request('logout');
         if(!$response->wasSuccessful()) {
             throw new NetcupException($response->getData());
@@ -407,10 +367,6 @@ class API {
      * @throws NetcupException
      */
     public function poll(int $messageCount = 10): Response {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
-
         return $this->request('poll', [
             'messagecount' => $messageCount
         ]);
@@ -430,9 +386,6 @@ class API {
      * @untested
      */
     public function priceTopleveldomain(string $topLevelDomain): Response {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         return $this->request('priceTopleveldomain', [
             'topleveldomain' => $topLevelDomain
         ]);
@@ -456,9 +409,6 @@ class API {
      * @throws NetcupException
      */
     public function updateDnsRecords(string $domainName, $dnsRecordSet): Response {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         return $this->request('updateDnsRecords', [
             'domainname'   => $domainName,
             'dnsrecordset' => $dnsRecordSet
@@ -477,9 +427,6 @@ class API {
      * @untested
      */
     public function updateDnsZone(string $domainName, $dnsZone): Response {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         return $this->request('updateDnsZone', [
             'domainname' => $domainName,
             'dnszone'    => $dnsZone
@@ -502,9 +449,6 @@ class API {
      * @untested
      */
     public function updateDomain(string $domainName, $contacts, $nameservers, $keepDnsSecRecords, $dnsSecEntries): Response {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         return $this->request('updateDomain', [
             'domainname'        => $domainName,
             'contacts'          => $contacts,
@@ -546,9 +490,6 @@ class API {
         string $telephone,
         string $email
     ): Handle {
-        if(!$this->isLoggedIn()) {
-            throw new NotLoggedInException();
-        }
         $response = $this->request('updateHandle', [
             'handle_id'    => $handleId,
             'type'         => $type,
@@ -573,8 +514,10 @@ class API {
      * @return Response
      * @throws NetcupException
      */
-    private function request(string $action, array $param = []): Response {
-
+    private function request(string $action, array $param = [], int $remainingRetries = 3): Response {
+        if (! $this->isLoggedIn()) {
+            $this->login();
+        }
         $requestId = uniqid();
         $payload = [
             'action' => $action,
@@ -596,6 +539,20 @@ class API {
             $guzzleResponse = $client->post(self::API_ENDPOINT, ['json' => $payload]);
             $response = new Response(json_decode($guzzleResponse->getBody()));
             $this->writeToLog($requestId, 'Received "' . $response->getStatus() . '" with message "' . $response->getShortMessage() . '"');
+            if (
+                !$response->wasSuccessful()
+                && $response->getStatusCode() === self::STATUS_CODE_SESSION_TIMEOUT
+            ) {
+                // Other response details will be:
+                // - "shortmessage" = "Api session id in invalid format"
+                // - "longmessage" = "The session id is not ina valid format."
+
+                $this->apiSessionId = null;
+                if ($remainingRetries > 0) {
+                    $this->request($action, $param, --$remainingRetries);
+                }
+            }
+
             return $response;
         } catch(GuzzleException) {
             throw new NetcupException();
